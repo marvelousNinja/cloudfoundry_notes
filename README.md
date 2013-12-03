@@ -202,6 +202,7 @@ class StageCollection
       :stemcell_openstack
     ]
   end
+end
 ```
 
 Here it is. First notable differences. We have a collection of stages for each infrastructure. Same goes for operating system.
