@@ -15,3 +15,7 @@ git clone --recursive git://github.com/foo/bar.git
 OR
 git submodule init 
 git submodule update
+
+kpartx
+debootstrap
+qemu
