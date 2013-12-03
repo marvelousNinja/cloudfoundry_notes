@@ -81,3 +81,52 @@ def build_stemcell
 end
 ```
 
+That leads us to BuilderCommand#build (and constructor):
+```ruby
+def initialize(env, options)
+  @environment = env
+  @infrastructure = Infrastructure.for(options.fetch(:infrastructure_name))
+  @operating_system = OperatingSystem.for(options.fetch(:operating_system_name))
+  @agent_name = options.fetch(:agent_name) || 'ruby'
+
+  @stemcell_builder_options = BuilderOptions.new(
+    env,
+    tarball: options.fetch(:release_tarball_path),
+    stemcell_version: options.fetch(:version),
+    infrastructure: infrastructure,
+    operating_system: operating_system,
+    agent_name: agent_name,
+  )
+  @shell = Bosh::Core::Shell.new
+end
+
+def build
+  sanitize
+
+  prepare_build_root
+
+  prepare_build_path
+
+  copy_stemcell_builder_to_build_path
+
+  prepare_work_root
+
+  persist_settings_for_bash
+
+  stage_collection = StageCollection.new(
+    infrastructure: infrastructure,
+    operating_system: operating_system,
+    agent_name: agent_name,
+  )
+  stage_runner = StageRunner.new(
+    build_path: build_path,
+    command_env: command_env,
+    settings_file: settings_path,
+    work_path: work_root
+  )
+  stage_runner.configure_and_apply(stage_collection.all_stages)
+  system(rspec_command) || raise('Stemcell specs failed')
+
+  stemcell_file
+end
+```
