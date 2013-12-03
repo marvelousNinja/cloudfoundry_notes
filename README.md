@@ -251,3 +251,26 @@ class StageRunner
   end
 end
 ```
+
+Well, right now I'm trying to understand... All these steps ('stages') for each infrastructure, are they needed for Google Computational Engine too?
+What I'm going to do, is to delete some of them.
+
+Let's start from network configuration. I don't know what initial OpenStack scripts do. Let's leave them off for now.
+Basic requirements from Google:
+DHCP note: https://github.com/Altoros/bosh/commit/cbc2a2938d0b19c88a93b23f7d770ed496341c28
+I'm not sure where I should set a default MTU setting...
+Anyway, it can be done in bash like this(assuming that eth0 is the target interface):
+```
+ifconfig eth0 mtu 1400
+```
+
+Now, we should disable IPv6. Basically, we need to add this into /etc/sysctl.conf:
+```
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+```
+
+Repo with tool to build Debian for GCE:
+https://github.com/camptocamp/build-debian-cloud
+Has some interesting configuration scripts.
