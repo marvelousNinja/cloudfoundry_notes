@@ -24,7 +24,10 @@ qemu
 Pull request with some details:
 https://github.com/Altoros/bosh/pull/3
 
-Right now, the process looks like this:
+Google's guide to creating custom images:
+https://developers.google.com/compute/docs/building-image
+
+The process looks like this:
 
 Here's the rake task for building stemcells:
 ```ruby
