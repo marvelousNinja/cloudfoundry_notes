@@ -274,3 +274,50 @@ net.ipv6.conf.lo.disable_ipv6 = 1
 Repo with tool to build Debian for GCE:
 https://github.com/camptocamp/build-debian-cloud
 Has some interesting configuration scripts.
+
+Also, there's a little problem. I don't really get, how to set NTP server.
+It's all very odd for me. Looks like there should be separate files for that.
+
+That's what I did with networking:
+```
+#!/usr/bin/env bash
+
+set -e
+
+base_dir=$(readlink -nf $(dirname $0)/../..)
+source $base_dir/lib/prelude_apply.bash
+
+# Remove persistent device names so that eth0 comes up as eth0
+rm -rf $chroot/etc/udev/rules.d/70-persistent-net.rules
+
+cat >> $chroot/etc/network/interfaces <<EOS
+auto eth0
+iface eth0 inet dhcp
+EOS
+
+# Set MTU recommended by Google
+ifconfig eth0 mtu 1460
+
+# Disable IPv6, as it is not supported by GCE
+cat >> $chroot/etc/sysctl.conf <<EOS
+# IPv6
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+EOS
+
+# Hostname will be set by startup script, /usr/share/google/set-hostname
+rm $chroot/etc/hostname
+
+# Adding required entries to /etc/hosts
+cat >> $chroot/etc/hosts <<EOS
+169.254.169.254 metadata.google.internal metadata
+EOS
+
+# Disabling iptables by default
+run_in_chroot $chroot "
+service iptables save
+service iptables stop
+chkconfig iptables off
+"
+```
