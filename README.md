@@ -323,3 +323,32 @@ service iptables stop
 chkconfig iptables off
 "
 ```
+
+Well, big surprise. I should have read about this earlier https://github.com/camptocamp/build-debian-cloud/blob/master/gce
+GCE specific scripts for setup.
+1. Add Google repo to sources:
+```
+#!/bin/bash
+# Basic sources.list
+cat > $imagedir/etc/apt/sources.list.d/goog.list <<EOF
+deb     http://goog-repo.appspot.com/ /
+EOF
+```
+
+2. Install required packages:
+```
+#!/bin/bash
+# Add GCE startup scripts and packages to the image.
+
+DEBS="google-compute-daemon google-startup-scripts image-bundle"
+for deb in $DEBS; do
+  chroot $imagedir apt-get install --force-yes -y ${deb}
+done
+
+3. Set hostname (optional?):
+```
+#!/bin/bash
+
+# Set the hostname from DHCP.
+chroot $imagedir ln -s /usr/share/google/set-hostname /etc/dhcp/dhclient-exit-hooks.d/set-hostname
+```
