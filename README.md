@@ -1,11 +1,13 @@
 cloudfoundry_notes
 ==================
 
+```
 sudo mkdir /mnt/stemcells  
 sudo mount --bind ~/tmp/stemcells /mnt/stemcells
 
 rake release:create_dev_release
 rake ci:build_stemcell[openstack,ubuntu,ruby]
+```
 
 https://help.ubuntu.com/community/Apt-Cacher-Server
 
