@@ -326,26 +326,51 @@ chkconfig iptables off
 
 Well, big surprise. I should have read about this earlier https://github.com/camptocamp/build-debian-cloud/blob/master/gce
 GCE specific scripts for setup.
+
 1. Add Google repo to sources:
 ```
 #!/bin/bash
-# Basic sources.list
-cat > $imagedir/etc/apt/sources.list.d/goog.list <<EOF
-deb     http://goog-repo.appspot.com/ /
+# Basic sources.list. The current packages work on all supported versions of
+# Debian, so at least for now we're using a distribution name independent of
+# those. The repository is GPG signed, so temporarily import the key.
+wget -O - https://goog-repo.appspot.com/debian/key/public.gpg.key | apt-key add -
+cat > /etc/apt/sources.list.d/goog.list <<EOF
+deb     http://goog-repo.appspot.com/debian pigeon main
 EOF
 ```
+2. Serial console output:
+```
+#!/bin/bash
+# Prepare GRUB to install itself correctly.
 
-2. Install required packages:
+# Set up a device map for GRUB to use while loopback-mounted:
+echo "(hd0) ${base_device_path}" > $imagedir/boot/grub/device.map
+echo "(hd0,1) ${device_path}" >> $imagedir/boot/grub/device.map
+
+# Configure GRUB timeouts for fast booting:
+sed -i -e '/GRUB_TIMEOUT=/s/^.*/GRUB_TIMEOUT=0/' $imagedir/etc/default/grub
+
+# Direct GRUB and Linux console output to ttyS0 to facilitate gcutil
+# getserialportoutput.
+#
+# The backreference on the next line avoids spurious spaces in the resulting
+# kernel command line.
+sed -i -e '/GRUB_CMDLINE_LINUX=/s/\( \)\?"$/\1console=ttyS0,38400n8"/' \
+    $imagedir/etc/default/grub
+sed -i -e '/GRUB_TERMINAL=/s/^.*/GRUB_TERMINAL="serial --unit=0 --speed=38400 --word=8 --parity=no --stop=1"' \
+    $imagedir/etc/default/grub
+```
+3. Install required packages:
 ```
 #!/bin/bash
 # Add GCE startup scripts and packages to the image.
 
 DEBS="google-compute-daemon google-startup-scripts image-bundle"
 for deb in $DEBS; do
-  chroot $imagedir apt-get install --force-yes -y ${deb}
+  apt-get install --force-yes -y ${deb}
 done
 
-3. Set hostname (optional?):
+4. Set hostname (optional?):
 ```
 #!/bin/bash
 
